@@ -1,7 +1,7 @@
 #include "Motor.h"
 
 MOTOR_t motor;
-uint32 PID_BaseSpeed = 4200;
+uint32 PID_BaseSpeed = 5200;  // 提升到5200，确保悬停裕量充足
 
 void motor_init(void)
 {

@@ -89,9 +89,18 @@ void SensorDataGet()
         }
         else
         {
-            height_dot = (hight - last_height) * 50.0f;
-            if(height_dot >  3.0f) height_dot =  3.0f;
-            if(height_dot < -3.0f) height_dot = -3.0f;
+            // 高度速度计算：一阶低通滤波平滑（新增）
+            static float height_dot_lpf = 0.0f;
+            float raw_height_dot = (hight - last_height) * 50.0f;
+            
+            // 限幅
+            if(raw_height_dot >  3.0f) raw_height_dot =  3.0f;
+            if(raw_height_dot < -3.0f) raw_height_dot = -3.0f;
+            
+            // 一阶低通滤波（alpha=0.3，更平滑）
+            height_dot_lpf = height_dot_lpf * 0.7f + raw_height_dot * 0.3f;
+            height_dot = height_dot_lpf;
+            
             last_height = hight;
         }
     }
