@@ -33,5 +33,7 @@ extern PIDControllerType_t HeightSpeedPID;
 extern PIDControllerType_t HeightPID;
 extern PIDControllerType_t CamPosPIDY;
 extern PIDControllerType_t CamPosPIDX;
+extern PIDControllerType_t FlowVelXPID;
+extern PIDControllerType_t FlowVelYPID;
 
 #endif

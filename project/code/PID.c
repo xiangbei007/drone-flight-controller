@@ -233,3 +233,54 @@ PIDControllerType_t CamPosPIDY = {
 	.derivative = 0,
 	.output = 0
 };
+
+// ============================================================
+// 光流速度控制 PID（外环）
+// 输入：滤波后的光流速度 (像素/帧)
+// 输出：目标倾角 (°)    传给 RollPID / PitchPID
+// ============================================================
+// 控制链路：
+//   光流速度(目标0) → FlowVelPID → 目标角度 → 角度PID → 角速度PID → 电机
+//
+// 调参指南：
+//   kp 大 → 抗飘能力强，但容易震荡
+//   ki 大 → 消除持续漂移（风/配平不准），但积分饱和风险
+//   kd 大 → 减速时更快稳住，但放大噪声
+//   LimitOutput → 限制飞机最大倾角，防止光流反馈导致过度倾斜
+// ============================================================
+
+// ---- X轴（左右）速度控制 ----
+// 光流X正方向 = 飞机向右移动，需要向左倾斜(roll负)来纠正
+PIDControllerType_t FlowVelXPID = {
+	.kp = 0.3f,          // 光流像素→倾角(°)，初始值保守
+	.ki = 0.001f,        // 消除持续漂移
+	.kd = 0.05f,         // 抑制速度震荡
+	.LimitIntegralMax = 3.0f,
+	.LimitIntegralMin = -3.0f,
+	.LimitOutputMax =  8.0f,     // 最大倾角限制 ±8°
+	.LimitOutputMin = -8.0f,
+	.IntegralThreshold = 10.0f,  // 速度误差<10时积分
+	.alpha = 0.6f,               // 微分低通滤波
+	.prev_error = 0,
+	.intergral = 0,
+	.derivative = 0,
+	.output = 0
+};
+
+// ---- Y轴（前后）速度控制 ----
+// 光流Y正方向 = 飞机向前移动，需要向后倾斜(pitch正)来纠正
+PIDControllerType_t FlowVelYPID = {
+	.kp = 0.3f,          // 光流像素→倾角(°)
+	.ki = 0.001f,        // 消除持续漂移
+	.kd = 0.05f,         // 抑制速度震荡
+	.LimitIntegralMax = 3.0f,
+	.LimitIntegralMin = -3.0f,
+	.LimitOutputMax =  8.0f,     // 最大倾角限制 ±8°
+	.LimitOutputMin = -8.0f,
+	.IntegralThreshold = 10.0f,
+	.alpha = 0.6f,
+	.prev_error = 0,
+	.intergral = 0,
+	.derivative = 0,
+	.output = 0
+};
