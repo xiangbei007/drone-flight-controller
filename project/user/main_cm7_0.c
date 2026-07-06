@@ -21,6 +21,11 @@ int main(void)
     Attitude_Init();
     dl1b_init();
     motor_init();
+    
+    // 【新增】初始化 UP-FLOW-302 光流传感器
+    upflow302_receive_init();
+    printf("UP-FLOW-302 optical flow sensor initialized.\r\n");
+    
     pit_ms_init(PIT_CH0, 1);
 
     while(true)
@@ -93,6 +98,21 @@ void pit0_ch0_isr()                     // 锟斤拷时锟斤拷通锟斤拷 0 �
     pit_isr_flag_clear(PIT_CH0);
     Attitude_Update();
     SensorDataGet();
+    
+    // 【新增】光流数据读取和打印 (阶段1验证)
+    static uint16_t flow_print_counter = 0;
+    if(++flow_print_counter >= 500)  // 每500ms打印一次 (1ms中断 × 500 = 500ms)
+    {
+        flow_print_counter = 0;
+        
+        // 打印光流数据用于验证
+        printf("[FLOW] State:%d, Valid:%d, X:%d, Y:%d, Time:%d\r\n", 
+               upflow302_state_flag,
+               upflow302_receive.upflow302_valid,
+               upflow302_receive.upflow302_x,
+               upflow302_receive.upflow302_y,
+               upflow302_receive.upflow302_us);
+    }
 
     PID_Update(&RollPID, 0, SystemIMU.angle.roll + 2.783f);
     PID_Update(&PitchPID, 0, SystemIMU.angle.pitch + 3.17f);
