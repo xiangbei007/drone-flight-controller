@@ -1,0 +1,30 @@
+# IAR Build output
+project/iar/project_config/Debug_m7_0/
+project/iar/project_config/Debug_m7_1/
+project/iar/project_config/Release_m7_0/
+project/iar/project_config/Release_m7_1/
+
+# IAR workspace settings
+project/iar/settings/
+*.dep
+*.ewt
+
+# Object files
+*.o
+*.obj
+*.out
+*.hex
+*.bin
+*.elf
+*.map
+*.lst
+
+# IAR specific
+*.xcl
+*.pbd
+*.browse
+
+# OS generated
+.DS_Store
+Thumbs.db
+desktop.ini
