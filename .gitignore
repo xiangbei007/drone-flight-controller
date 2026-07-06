@@ -28,3 +28,6 @@ project/iar/settings/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Test directory (local only)
+test/
