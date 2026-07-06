@@ -168,10 +168,15 @@ project/iar/cyt4bb7.eww
 通过 UART 输出调试信息 (115200 波特率)：
 ```
 UP-FLOW-302 optical flow sensor initialized.
-[FLOW] State:1, Valid:245, X:2, Y:-15, Time:12345
+[FLOW] V:1 Vx:2.3 Vy:-1.5 Rt:-0.69 Pt:0.45
 Gyro Bias: X=0.12, Y=-0.08, Z=0.05 deg/s
 Acc Earth Bias: X=0.0012 Y=-0.0008 Z=0.9998 g
 ```
+
+调试字段说明：
+- `V`: 光流有效标志 (1=有效, 0=无效)
+- `Vx/Vy`: 滤波后光流速度 (像素/帧)
+- `Rt/Pt`: 光流速度PID输出的目标 Roll/Pitch 角度 (°)
 
 ## 分支说明
 
@@ -187,7 +192,8 @@ Acc Earth Bias: X=0.0012 Y=-0.0008 Z=0.9998 g
 - ✅ UP-FLOW-302 光流初始化
 - ✅ UART2 光流数据接收
 - ✅ 光流数据打印验证
-- 🚧 光流位置控制 (开发中)
+- ✅ 光流速度控制 (阶段 2)
+- 🚧 光流定点悬停 (阶段 3，开发中)
 
 ## 开发路线
 
@@ -196,9 +202,9 @@ Acc Earth Bias: X=0.0012 Y=-0.0008 Z=0.9998 g
 - [x] 级联 PID 控制 (姿态 + 角速度 + 高度)
 - [x] V 形视觉定位
 - [x] 光流数据接收 (阶段 1)
+- [x] 光流速度控制 (阶段 2)
 
 ### 进行中 🚧
-- [ ] 光流速度控制 (阶段 2)
 - [ ] 光流定点悬停 (阶段 3)
 - [ ] 配平值自动校准
 - [ ] 遥控器接入
@@ -247,69 +253,3 @@ Ki = 0.0013 // 消除静差
 Kp = 233.0  // 速度 → 油门
 Ki = 0.0    // 不用积分 (防止积分饱和)
 ```
-
-## 常见问题
-
-### Q1: 编译报错 "file not found"
-**A:** 确保 IAR 版本 ≥ 9.40.1，且所有库文件完整。
-
-### Q2: 烧录失败
-**A:** 检查 CMSIS-DAP 连接，确认核心板供电正常，尝试复位后重新烧录。
-
-### Q3: IMU 数据异常
-**A:** 检查 SPI 接线，确认 IMU 供电 3.3V，初始化时保持静止。
-
-### Q4: 电机不转或转速异常
-**A:** 检查 PWM 引脚连接，确认电调校准 (500-1200μs)，基础油门 ≥ 4200。
-
-### Q5: 飞机一直漂移
-**A:** 可能原因：
-- 配平值不准 (修改 `main_cm7_0.c` 中的 +2.783° 和 +3.17°)
-- 基础油门过低 (提升到 5200)
-- 光流未集成 (切换到 `dev` 分支)
-
-## 贡献指南
-
-欢迎提交 Issue 和 Pull Request！
-
-### 提交规范
-- `feat`: 新功能
-- `fix`: 修复 bug
-- `docs`: 文档更新
-- `refactor`: 代码重构
-- `perf`: 性能优化
-
-### 示例
-```
-feat: add optical flow position control
-
-- Implement position PID controller
-- Integrate optical flow data with height compensation
-- Add position hold mode
-```
-
-## 开源协议
-
-本项目基于 GPL 3.0 开源协议。
-
-- 允许商业使用和修改
-- 修改后的代码必须开源
-- 保留原作者版权声明
-
-详见 [LICENSE](libraries/doc/GPL3_permission_statement.txt)
-
-## 致谢
-
-- [逐飞科技](https://seekfree.taobao.com/) - CYT4BB7 开源库
-- [Infineon](https://www.infineon.com/) - TRAVEO™ II SDK
-- [全国大学生智能汽车竞赛](https://smartcar.cdstm.cn/)
-
-## 联系方式
-
-- **GitHub**: [@xiangbei007](https://github.com/xiangbei007)
-- **仓库**: [drone-flight-controller](https://github.com/xiangbei007/drone-flight-controller)
-- **Email**: 2561340938@qq.com
-
----
-
-**祝飞行顺利！** 🚁
