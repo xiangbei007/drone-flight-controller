@@ -137,13 +137,13 @@ void pit0_ch0_isr()                     // 锟斤拷时锟斤拷通锟斤拷 0 �
     if(flow_ctrl_enable && flow_valid)
     {
         // 光流速度环：速度误差 → 目标角度
-        // X轴：光流X正 = 飞机右移 → 需要roll负（左倾）来纠正，所以取负号
+        // X轴：光流X正 = 飞机右移 → 需要roll负（左倾）来纠正
         PID_Update(&FlowVelXPID, 0.0f, flow_vel_x);
-        roll_target = -FlowVelXPID.output;
+        roll_target = FlowVelXPID.output;
         
         // Y轴：光流Y正 = 飞机前移 → 需要pitch正（后仰）来纠正
         PID_Update(&FlowVelYPID, 0.0f, flow_vel_y);
-        pitch_target = FlowVelYPID.output;
+        pitch_target = -FlowVelYPID.output;
     }
     
     // ====== 姿态控制 ======
