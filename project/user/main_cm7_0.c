@@ -126,7 +126,7 @@ void SensorDataGet()
     SCB_CleanInvalidateDCache_by_Addr(&tof_share, sizeof(tof_share));
 }
 
-void pit0_ch0_isr()                     // 锟斤拷时锟斤拷通锟斤拷 0 锟斤拷锟斤拷锟叫断凤拷锟斤拷锟斤拷      
+void pit0_ch0_isr()                     // 定时器通道 0 中断回调
 {
     pit_isr_flag_clear(PIT_CH0);
     Attitude_Update();
@@ -221,5 +221,3 @@ void pit0_ch0_isr()                     // 锟斤拷时锟斤拷通锟斤拷 0 �
                SystemIMU.gyro_deg[0], SystemIMU.gyro_deg[1]);  // 打印陀螺仪用于验证补偿
     }
 }
-
-// **************************** 锟斤拷锟斤拷锟斤拷锟斤拷 ****************************

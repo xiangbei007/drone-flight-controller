@@ -1,59 +1,59 @@
 #include "Filter.h"
 
-Bessel_Filter_t gyro_lpf[3];        // ÈýÖá½ÇËÙ¶È±´Èû¶ûÂË²¨Æ÷¾ä±ú
-Bessel_Filter_t acc_lpf[3];         // ÈýÖá½Ç¼ÓËÙ¶È±´Èû¶ûÂË²¨Æ÷¾ä±ú
+Bessel_Filter_t gyro_lpf[3];        // ä¸‰è½´è§’é€Ÿåº¦è´å¡žå°”æ»¤æ³¢å™¨å¥æŸ„
+Bessel_Filter_t acc_lpf[3];         // ä¸‰è½´è§’åŠ é€Ÿåº¦è´å¡žå°”æ»¤æ³¢å™¨å¥æŸ„
 
 
 /**
- * @brief ³õÊ¼»¯¶þ½×±´Èû¶ûµÍÍ¨ÂË²¨Æ÷
- * @param filter   ÂË²¨Æ÷½á¹¹ÌåÖ¸Õë
- * @param f_sample ²ÉÑùÆµÂÊ (±ÈÈçÄãµÄ AHRS_DT ÊÇ 1ms£¬ÕâÀï¾ÍÊÇ 1000.0f)
- * @param f_cutoff ½ØÖ¹ÆµÂÊ (±ÈÈç 35.0f »ò 25.0f)
+ * @brief åˆå§‹åŒ–äºŒé˜¶è´å¡žå°”ä½Žé€šæ»¤æ³¢å™¨
+ * @param filter   æ»¤æ³¢å™¨ç»“æž„ä½“æŒ‡é’ˆ
+ * @param f_sample é‡‡æ ·é¢‘çŽ‡ (æ¯”å¦‚ä½ çš„ AHRS_DT æ˜¯ 1msï¼Œè¿™é‡Œå°±æ˜¯ 1000.0f)
+ * @param f_cutoff æˆªæ­¢é¢‘çŽ‡ (æ¯”å¦‚ 35.0f æˆ– 25.0f)
  */
 void Filter_Bessel_Init(Bessel_Filter_t *filter, float f_sample, float f_cutoff)
 {
-    // ±´Èû¶ûÂË²¨Æ÷µÄ¹ÌÓÐ Q Öµ (1 / ¸ùºÅ3)
+    // è´å¡žå°”æ»¤æ³¢å™¨çš„å›ºæœ‰ Q å€¼ (1 / æ ¹å·3)
     float Q = 0.57735027f; 
     
-    // ½ÇÆµÂÊÓ³Éä
+    // è§’é¢‘çŽ‡æ˜ å°„
     float omega_0 = 2.0f * M_PI * f_cutoff / f_sample;
     
-    // Ô¤¼ÆËãÖÐ¼ä±äÁ¿
+    // é¢„è®¡ç®—ä¸­é—´å˜é‡
     float cos_omega = cosf(omega_0);
     float alpha = sinf(omega_0) / (2.0f * Q);
     
-    // ¹éÒ»»¯ÏµÊý a0
+    // å½’ä¸€åŒ–ç³»æ•° a0
     float a0 = 1.0f + alpha;
 
-    // ¼ÆËã±ê×¼ Biquad ÏµÊý²¢Ö±½Ó¹éÒ»»¯
+    // è®¡ç®—æ ‡å‡† Biquad ç³»æ•°å¹¶ç›´æŽ¥å½’ä¸€åŒ–
     filter->b0 = ((1.0f - cos_omega) / 2.0f) / a0;
     filter->b1 =  (1.0f - cos_omega)         / a0;
     filter->b2 = ((1.0f - cos_omega) / 2.0f) / a0;
     filter->a1 = (-2.0f * cos_omega)         / a0;
     filter->a2 =  (1.0f - alpha)             / a0;
 
-    // ÇåÁãÀúÊ·×´Ì¬
+    // æ¸…é›¶åŽ†å²çŠ¶æ€
     filter->x1 = 0.0f; filter->x2 = 0.0f;
     filter->y1 = 0.0f; filter->y2 = 0.0f;
     filter->out = 0.0f;
 }
 
 /**
- * @brief Ó¦ÓÃ±´Èû¶ûÂË²¨Æ÷ (ÐèÔÚ¶¨ÆµÖÐ¶ÏÖÐµ÷ÓÃ)
- * @param filter  ÂË²¨Æ÷½á¹¹ÌåÖ¸Õë
- * @param input   µ±Ç°Ô­Ê¼²ÉÑùÖµ
- * @return ÂË²¨ºóµÄÆ½»¬Öµ
+ * @brief åº”ç”¨è´å¡žå°”æ»¤æ³¢å™¨ (éœ€åœ¨å®šé¢‘ä¸­æ–­ä¸­è°ƒç”¨)
+ * @param filter  æ»¤æ³¢å™¨ç»“æž„ä½“æŒ‡é’ˆ
+ * @param input   å½“å‰åŽŸå§‹é‡‡æ ·å€¼
+ * @return æ»¤æ³¢åŽçš„å¹³æ»‘å€¼
  */
 float Filter_Bessel_Apply(Bessel_Filter_t *filter, float input)
 {
-    // ±ê×¼²î·Ö·½³Ì: y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
+    // æ ‡å‡†å·®åˆ†æ–¹ç¨‹: y[n] = b0*x[n] + b1*x[n-1] + b2*x[n-2] - a1*y[n-1] - a2*y[n-2]
     filter->out = filter->b0 * input + 
                   filter->b1 * filter->x1 + 
                   filter->b2 * filter->x2 - 
                   filter->a1 * filter->y1 - 
                   filter->a2 * filter->y2;
 
-    // ÒÆÎ»¸üÐÂÀúÊ·×´Ì¬
+    // ç§»ä½æ›´æ–°åŽ†å²çŠ¶æ€
     filter->x2 = filter->x1;
     filter->x1 = input;
     filter->y2 = filter->y1;
