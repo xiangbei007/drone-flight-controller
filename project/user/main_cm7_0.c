@@ -55,6 +55,15 @@ int main(void)
     trim_pitch = SystemIMU.angle.pitch;
     printf("Auto-Trim: Roll=%.3f, Pitch=%.3f deg\r\n", trim_roll, trim_pitch);
     
+    // 配平值范围检查（防止飞机放置不平导致飞走）
+    if(fabsf(trim_roll) > 5.0f || fabsf(trim_pitch) > 5.0f)
+    {
+        printf("WARNING: Trim value too large! Aircraft may not be level.\r\n");
+        printf("Please place aircraft on level surface and restart.\r\n");
+        printf("Recommended: |Roll| < 3.0 deg, |Pitch| < 3.0 deg\r\n");
+        // 不阻止起飞，但警告用户
+    }
+    
     // 诊断打印
     printf("FlowVelXPID: Kp=%.3f, Ki=%.4f, Kd=%.3f, Limit=%.1f\r\n", 
            FlowVelXPID.kp, FlowVelXPID.ki, FlowVelXPID.kd, FlowVelXPID.LimitOutputMax);
