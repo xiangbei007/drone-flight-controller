@@ -20,7 +20,17 @@ void PID_Update(PIDControllerType_t* pid,float target,float current)
 	
 	//积分因子
 	float integral_factor = (fabs(error) < pid->IntegralThreshold) ? 1.0f : (pid->IntegralThreshold / fabs(error));
-	pid->intergral += integral_factor  * error;
+	
+	// 条件积分：仅在输出未饱和时累积
+	// 如果输出已饱和且误差方向会继续推向饱和，停止积分
+	int output_saturated_high = (pid->output >= pid->LimitOutputMax - 0.1f);
+	int output_saturated_low = (pid->output <= pid->LimitOutputMin + 0.1f);
+	
+	if (!(output_saturated_high && error > 0) && !(output_saturated_low && error < 0))
+	{
+		pid->intergral += integral_factor * error;
+	}
+	// 否则积分保持不变（不继续累积）
 	
 
 	//微分项,采用一阶低通滤波
@@ -35,12 +45,10 @@ void PID_Update(PIDControllerType_t* pid,float target,float current)
 	if( pid->output > pid->LimitOutputMax ) 
 	{
 		pid->output = pid->LimitOutputMax;
-		if( error>0 ) pid->intergral *= 0.9f; // 轻微减少积分项，防止累积过多
 	}
 	if( pid->output < pid->LimitOutputMin ) 
 	{
 		pid->output = pid->LimitOutputMin;
-		if( error<0 ) pid->intergral *= 0.9f; // 轻微减少积分项，防止累积过多
 	}
 	
 	//积分限幅
@@ -254,13 +262,13 @@ PIDControllerType_t CamPosPIDY = {
 // 积分项承担CG补偿的角色（替代配平值），需要足够大的积分权限
 PIDControllerType_t FlowVelXPID = {
 	.kp = 0.15f,         // 比例增益
-	.ki = 0.03f,         // 积分增益（从0.015→0.03，加速CG补偿收敛）
+	.ki = 0.03f,         // 积分增益（加速CG补偿收敛）
 	.kd = 0.08f,         // 微分增益
-	.LimitIntegralMax = 250.0f,  // 积分限幅（大幅提升：0.03×250=7.5°，足以补偿CG偏移）
-	.LimitIntegralMin = -250.0f,
-	.LimitOutputMax =  8.0f,     // 输出限幅提升到±8°（需要覆盖CG偏移+制动）
-	.LimitOutputMin = -8.0f,
-	.IntegralThreshold = 50.0f,  // 积分阈值大幅放宽（速度误差<50时积分，几乎总是积分）
+	.LimitIntegralMax = 280.0f,  // 积分限幅（0.03×280=8.4°，覆盖实测8°+裕量）
+	.LimitIntegralMin = -280.0f,
+	.LimitOutputMax =  10.0f,    // 输出限幅（必须>积分满载，留足比例项空间）
+	.LimitOutputMin = -10.0f,
+	.IntegralThreshold = 15.0f,  // 积分阈值（误差<15时全速积分，过滤噪声）
 	.alpha = 0.6f,               // 微分低通滤波
 	.prev_error = 0,
 	.intergral = 0,
@@ -272,13 +280,13 @@ PIDControllerType_t FlowVelXPID = {
 // 光流Y正方向 = 飞机向前移动，需要向后倾斜(pitch正)来纠正
 PIDControllerType_t FlowVelYPID = {
 	.kp = 0.15f,         // 比例增益
-	.ki = 0.03f,         // 积分增益（0.03，加速CG补偿）
+	.ki = 0.03f,         // 积分增益
 	.kd = 0.08f,         // 微分增益
-	.LimitIntegralMax = 250.0f,  // 积分限幅（0.03×250=7.5°）
-	.LimitIntegralMin = -250.0f,
-	.LimitOutputMax =  8.0f,     // 输出限幅±8°
-	.LimitOutputMin = -8.0f,
-	.IntegralThreshold = 50.0f,  // 积分阈值
+	.LimitIntegralMax = 280.0f,  // 积分限幅（0.03×280=8.4°）
+	.LimitIntegralMin = -280.0f,
+	.LimitOutputMax =  10.0f,    // 输出限幅
+	.LimitOutputMin = -10.0f,
+	.IntegralThreshold = 15.0f,  // 积分阈值
 	.alpha = 0.6f,
 	.prev_error = 0,
 	.intergral = 0,
