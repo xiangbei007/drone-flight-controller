@@ -20,7 +20,17 @@ static float flow_vel_y = 0.0f;        // 滤波后的光流Y速度
 static uint8_t flow_valid = 0;         // 光流数据有效标志
 static uint8_t flow_ctrl_enable = 1;   // 光流控制使能（1=开启，0=关闭）
 
-#define FLOW_LPF_ALPHA  0.4f           // 光流低通滤波系数（越小越平滑，越大响应越快）
+#define FLOW_LPF_ALPHA  0.3f           // 光流低通滤波系数（降到0.3，减少噪声放大）
+
+// 陀螺仪补偿系数：将角速度(deg/s)转换为光流像素位移
+// 取决于光流安装高度和镜头焦距，需要实测标定
+// 粗略估算：高度30cm，镜头视角42°，分辨率30x30
+// 像素/角度 ≈ 30 / 42 ≈ 0.71 像素/度
+// 每帧时间约 20ms，角速度 1°/s 在 20ms 内转 0.02°
+// 对应像素 = 0.02 * 0.71 ≈ 0.014 像素
+// 实测可能更大，先设 0.1，根据测试结果调整
+#define FLOW_GYRO_COMP_X  0.1f         // X轴陀螺仪补偿系数
+#define FLOW_GYRO_COMP_Y  0.1f         // Y轴陀螺仪补偿系数
 
 int main(void)
 {
@@ -32,6 +42,12 @@ int main(void)
     
     // 【新增】初始化 UP-FLOW-302 光流传感器
     upflow302_receive_init();
+    
+    // 【诊断】打印PID参数以验证编译正确性
+    printf("FlowVelXPID: Kp=%.3f, Ki=%.4f, Kd=%.3f, Limit=%.1f\r\n", 
+           FlowVelXPID.kp, FlowVelXPID.ki, FlowVelXPID.kd, FlowVelXPID.LimitOutputMax);
+    printf("FlowVelYPID: Kp=%.3f, Ki=%.4f, Kd=%.3f, Limit=%.1f\r\n", 
+           FlowVelYPID.kp, FlowVelYPID.ki, FlowVelYPID.kd, FlowVelYPID.LimitOutputMax);
     printf("UP-FLOW-302 optical flow sensor initialized.\r\n");
     
     pit_ms_init(PIT_CH0, 1);
@@ -124,9 +140,14 @@ void pit0_ch0_isr()                     // 锟斤拷时锟斤拷通锟斤拷 0 �
         
         if(upflow302_receive.upflow302_valid == 245)
         {
+            // 陀螺仪补偿：减去机身旋转引起的假位移
+            // 机身绕Y轴转（pitch变化）会导致X方向像素移动，绕X轴转（roll变化）导致Y方向移动
+            float raw_x = (float)upflow302_receive.upflow302_x - SystemIMU.gyro_deg[1] * FLOW_GYRO_COMP_X;
+            float raw_y = (float)upflow302_receive.upflow302_y - SystemIMU.gyro_deg[0] * FLOW_GYRO_COMP_Y;
+            
             // 数据有效：一阶低通滤波平滑光流速度
-            flow_vel_x = flow_vel_x * (1.0f - FLOW_LPF_ALPHA) + (float)upflow302_receive.upflow302_x * FLOW_LPF_ALPHA;
-            flow_vel_y = flow_vel_y * (1.0f - FLOW_LPF_ALPHA) + (float)upflow302_receive.upflow302_y * FLOW_LPF_ALPHA;
+            flow_vel_x = flow_vel_x * (1.0f - FLOW_LPF_ALPHA) + raw_x * FLOW_LPF_ALPHA;
+            flow_vel_y = flow_vel_y * (1.0f - FLOW_LPF_ALPHA) + raw_y * FLOW_LPF_ALPHA;
             flow_valid = 1;
         }
         else
@@ -193,10 +214,11 @@ void pit0_ch0_isr()                     // 锟斤拷时锟斤拷通锟斤拷 0 �
     if(++flow_print_counter >= 500)
     {
         flow_print_counter = 0;
-        printf("[FLOW] V:%d Vx:%.1f Vy:%.1f Rt:%.2f Pt:%.2f\r\n",
+        printf("[FLOW] V:%d Vx:%.1f Vy:%.1f Rt:%.2f Pt:%.2f Gx:%.1f Gy:%.1f\r\n",
                flow_valid,
                flow_vel_x, flow_vel_y,
-               roll_target, pitch_target);
+               roll_target, pitch_target,
+               SystemIMU.gyro_deg[0], SystemIMU.gyro_deg[1]);  // 打印陀螺仪用于验证补偿
     }
 }
 
