@@ -29,8 +29,8 @@ static uint8_t flow_ctrl_enable = 1;   // 光流控制使能（1=开启，0=关�
 // 每帧时间约 20ms，角速度 1°/s 在 20ms 内转 0.02°
 // 对应像素 = 0.02 * 0.71 ≈ 0.014 像素
 // 实测可能更大，先设 0.1，根据测试结果调整
-#define FLOW_GYRO_COMP_X  0.1f         // X轴陀螺仪补偿系数
-#define FLOW_GYRO_COMP_Y  0.1f         // Y轴陀螺仪补偿系数
+#define FLOW_GYRO_COMP_X  0.3f         // X轴陀螺仪补偿系数（从0.1提升到0.3）
+#define FLOW_GYRO_COMP_Y  0.3f         // Y轴陀螺仪补偿系数（从0.1提升到0.3）
 
 int main(void)
 {
@@ -131,6 +131,21 @@ void pit0_ch0_isr()                     // 定时器通道 0 中断回调
     pit_isr_flag_clear(PIT_CH0);
     Attitude_Update();
     SensorDataGet();
+    
+    // ====== 倾角安全保护 ======
+    if(fabsf(SystemIMU.angle.roll) > 45.0f || fabsf(SystemIMU.angle.pitch) > 45.0f)
+    {
+        PID_BaseSpeed = 0;  // 紧急关机
+        PID_Reset(&FlowVelXPID);
+        PID_Reset(&FlowVelYPID);
+        PID_Reset(&RollPID);
+        PID_Reset(&PitchPID);
+        PID_Reset(&RollRatePID);
+        PID_Reset(&PitchRatePID);
+        PID_Reset(&HeightPID);
+        PID_Reset(&HeightSpeedPID);
+        return;
+    }
     
     // ====== 光流数据处理 ======
     // 每次中断检查光流是否有新数据（upflow302_finsh_flag由UART中断置位）
