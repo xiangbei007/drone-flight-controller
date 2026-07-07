@@ -1,0 +1,6 @@
+Gyro Bias: X=0.80, Y=0.41, Z=0.58 deg/s
+Acc Earth Bias: X=-0.0017 Y=0.0048 Z=1.0039 g
+Auto-Trim: Roll=-3.926, Pitch=3.378 deg
+FlowVelXPID: Kp=0.150, Ki=0.0150, Kd=0.080, Limit=6.0
+Flow control: DISABLED
+
