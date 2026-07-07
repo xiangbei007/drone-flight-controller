@@ -251,15 +251,16 @@ PIDControllerType_t CamPosPIDY = {
 
 // ---- X轴（左右）速度控制 ----
 // 光流X正方向 = 飞机向右移动，需要向左倾斜(roll负)来纠正
+// 积分项承担CG补偿的角色（替代配平值），需要足够大的积分权限
 PIDControllerType_t FlowVelXPID = {
 	.kp = 0.15f,         // 比例增益
-	.ki = 0.015f,        // 积分增益（从0.001提升到0.015，使积分有实际作用）
-	.kd = 0.08f,         // 微分增益（从0.05提升到0.08，增加阻尼）
-	.LimitIntegralMax = 15.0f,   // 积分限幅（从3.0提升到15.0，最大积分输出=0.015×15=0.225°）
-	.LimitIntegralMin = -15.0f,
-	.LimitOutputMax =  6.0f,     // 输出限幅（从±4°提升到±6°，增加制动余量）
-	.LimitOutputMin = -6.0f,
-	.IntegralThreshold = 8.0f,   // 积分阈值（从10降到8，更早启动积分）
+	.ki = 0.03f,         // 积分增益（从0.015→0.03，加速CG补偿收敛）
+	.kd = 0.08f,         // 微分增益
+	.LimitIntegralMax = 250.0f,  // 积分限幅（大幅提升：0.03×250=7.5°，足以补偿CG偏移）
+	.LimitIntegralMin = -250.0f,
+	.LimitOutputMax =  8.0f,     // 输出限幅提升到±8°（需要覆盖CG偏移+制动）
+	.LimitOutputMin = -8.0f,
+	.IntegralThreshold = 50.0f,  // 积分阈值大幅放宽（速度误差<50时积分，几乎总是积分）
 	.alpha = 0.6f,               // 微分低通滤波
 	.prev_error = 0,
 	.intergral = 0,
@@ -271,13 +272,13 @@ PIDControllerType_t FlowVelXPID = {
 // 光流Y正方向 = 飞机向前移动，需要向后倾斜(pitch正)来纠正
 PIDControllerType_t FlowVelYPID = {
 	.kp = 0.15f,         // 比例增益
-	.ki = 0.015f,        // 积分增益（从0.001提升到0.015）
-	.kd = 0.08f,         // 微分增益（从0.05提升到0.08）
-	.LimitIntegralMax = 15.0f,   // 积分限幅（从3.0提升到15.0）
-	.LimitIntegralMin = -15.0f,
-	.LimitOutputMax =  6.0f,     // 输出限幅（从±4°提升到±6°）
-	.LimitOutputMin = -6.0f,
-	.IntegralThreshold = 8.0f,   // 积分阈值（从10降到8）
+	.ki = 0.03f,         // 积分增益（0.03，加速CG补偿）
+	.kd = 0.08f,         // 微分增益
+	.LimitIntegralMax = 250.0f,  // 积分限幅（0.03×250=7.5°）
+	.LimitIntegralMin = -250.0f,
+	.LimitOutputMax =  8.0f,     // 输出限幅±8°
+	.LimitOutputMin = -8.0f,
+	.IntegralThreshold = 50.0f,  // 积分阈值
 	.alpha = 0.6f,
 	.prev_error = 0,
 	.intergral = 0,

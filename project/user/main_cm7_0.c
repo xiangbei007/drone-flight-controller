@@ -18,11 +18,12 @@ static uint8_t tof_state = 0;
 static float flow_vel_x = 0.0f;        // 滤波后的光流X速度
 static float flow_vel_y = 0.0f;        // 滤波后的光流Y速度
 static uint8_t flow_valid = 0;         // 光流数据有效标志
-static uint8_t flow_ctrl_enable = 0;   // 光流控制使能（0=关闭，先调好姿态环再开）
+static uint8_t flow_ctrl_enable = 1;   // 光流控制使能（1=开启）
 
-// 配平值自动校准（替代硬编码的2.783/3.17）
-static float trim_roll = 0.0f;         // Roll配平偏移量（上电自动校准）
-static float trim_pitch = 0.0f;        // Pitch配平偏移量（上电自动校准）
+// 配平值：设为0，依靠光流积分自动补偿CG偏移
+// 飞机底盘有电源线无法平放，启动配平不可用
+static float trim_roll = 0.0f;
+static float trim_pitch = 0.0f;
 
 #define FLOW_LPF_ALPHA  0.3f           // 光流低通滤波系数（降到0.3，减少噪声放大）
 
@@ -47,26 +48,19 @@ int main(void)
     // 初始化 UP-FLOW-302 光流传感器
     upflow302_receive_init();
     
-    // ====== 配平值自动校准 ======
-    // Attitude_Init 已经完成了IMU校准和Mahony收敛
-    // 此时IMU输出的角度就是飞机静置时的实际倾角
-    // 将其作为配平零点，这样无论电池怎么装，每次上电都自动适配
-    trim_roll = SystemIMU.angle.roll;
-    trim_pitch = SystemIMU.angle.pitch;
-    printf("Auto-Trim: Roll=%.3f, Pitch=%.3f deg\r\n", trim_roll, trim_pitch);
-    
-    // 配平值范围检查（防止飞机放置不平导致飞走）
-    if(fabsf(trim_roll) > 5.0f || fabsf(trim_pitch) > 5.0f)
-    {
-        printf("WARNING: Trim value too large! Aircraft may not be level.\r\n");
-        printf("Please place aircraft on level surface and restart.\r\n");
-        printf("Recommended: |Roll| < 3.0 deg, |Pitch| < 3.0 deg\r\n");
-        // 不阻止起飞，但警告用户
-    }
+    // ====== 配平策略 ======
+    // 飞机底盘有电源线，无法平放在水平面上，启动自动校准不可用
+    // 采用 trim = 0 策略，依靠光流积分在飞行中自动补偿CG偏移
+    // 光流积分参数已增强：Ki=0.03, LimitIntegral=250 → 最大积分输出7.5°
+    trim_roll = 0.0f;
+    trim_pitch = 0.0f;
+    printf("Trim: Roll=%.3f, Pitch=%.3f deg (Fixed, CG offset compensated by flow integral)\r\n", 
+           trim_roll, trim_pitch);
     
     // 诊断打印
-    printf("FlowVelXPID: Kp=%.3f, Ki=%.4f, Kd=%.3f, Limit=%.1f\r\n", 
-           FlowVelXPID.kp, FlowVelXPID.ki, FlowVelXPID.kd, FlowVelXPID.LimitOutputMax);
+    printf("FlowVelXPID: Kp=%.3f, Ki=%.4f, Kd=%.3f, Limit=%.1f, IntLimit=%.1f\r\n", 
+           FlowVelXPID.kp, FlowVelXPID.ki, FlowVelXPID.kd, 
+           FlowVelXPID.LimitOutputMax, FlowVelXPID.LimitIntegralMax);
     printf("Flow control: %s\r\n", flow_ctrl_enable ? "ENABLED" : "DISABLED");
     
     pit_ms_init(PIT_CH0, 1);
@@ -249,10 +243,10 @@ void pit0_ch0_isr()                     // 定时器通道 0 中断回调
     if(++print_counter >= 500)
     {
         print_counter = 0;
-        printf("[ATT] R:%.2f(%.2f) P:%.2f(%.2f) Y:%.2f | Gr:%.1f Gp:%.1f\r\n",
-               SystemIMU.angle.roll, SystemIMU.angle.roll - trim_roll,
-               SystemIMU.angle.pitch, SystemIMU.angle.pitch - trim_pitch,
-               SystemIMU.angle.yaw,
-               SystemIMU.gyro_deg[0], SystemIMU.gyro_deg[1]);
+        printf("[FLOW] V:%d Vx:%.1f Vy:%.1f Rt:%.2f Pt:%.2f Int:%.1f,%.1f\r\n",
+               flow_valid,
+               flow_vel_x, flow_vel_y,
+               roll_target, pitch_target,
+               FlowVelXPID.intergral, FlowVelYPID.intergral);  // 打印积分值，观察CG补偿
     }
 }
