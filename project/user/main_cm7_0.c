@@ -185,17 +185,24 @@ void pit0_ch0_isr()                     // 定时器通道 0 中断回调
     // 目标速度为0（悬停），输出为目标倾角
     float roll_target = 0.0f;
     float pitch_target = 0.0f;
-    
+
     if(flow_ctrl_enable && flow_valid)
     {
         // 光流速度环：速度误差 → 目标角度
         // X轴：光流X正 = 飞机右移 → 需要roll负（左倾）来纠正
         PID_Update(&FlowVelXPID, 0.0f, flow_vel_x);
         roll_target = FlowVelXPID.output;
-        
+
         // Y轴：光流Y正 = 飞机前移 → 需要pitch正（后仰）来纠正
         PID_Update(&FlowVelYPID, 0.0f, flow_vel_y);
         pitch_target = -FlowVelYPID.output;
+    }
+    else
+    {
+        // 光流失效时：保持积分补偿值，不让配平丢失
+        // 积分值代表已学习的CG偏移，丢失会导致飞机快速倾斜
+        roll_target = FlowVelXPID.ki * FlowVelXPID.intergral;
+        pitch_target = -(FlowVelYPID.ki * FlowVelYPID.intergral);
     }
     
     // ====== 姿态控制 ======
