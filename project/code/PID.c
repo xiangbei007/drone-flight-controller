@@ -20,7 +20,17 @@ void PID_Update(PIDControllerType_t* pid,float target,float current)
 	
 	//积分因子
 	float integral_factor = (fabs(error) < pid->IntegralThreshold) ? 1.0f : (pid->IntegralThreshold / fabs(error));
-	pid->intergral += integral_factor  * error;
+	
+	// 条件积分：仅在输出未饱和时累积
+	// 如果输出已饱和且误差方向会继续推向饱和，停止积分
+	int output_saturated_high = (pid->output >= pid->LimitOutputMax - 0.1f);
+	int output_saturated_low = (pid->output <= pid->LimitOutputMin + 0.1f);
+	
+	if (!(output_saturated_high && error > 0) && !(output_saturated_low && error < 0))
+	{
+		pid->intergral += integral_factor * error;
+	}
+	// 否则积分保持不变（不继续累积）
 	
 
 	//微分项,采用一阶低通滤波
@@ -35,12 +45,10 @@ void PID_Update(PIDControllerType_t* pid,float target,float current)
 	if( pid->output > pid->LimitOutputMax ) 
 	{
 		pid->output = pid->LimitOutputMax;
-		if( error>0 ) pid->intergral *= 0.9f; // 轻微减少积分项，防止累积过多
 	}
 	if( pid->output < pid->LimitOutputMin ) 
 	{
 		pid->output = pid->LimitOutputMin;
-		if( error<0 ) pid->intergral *= 0.9f; // 轻微减少积分项，防止累积过多
 	}
 	
 	//积分限幅
@@ -251,15 +259,16 @@ PIDControllerType_t CamPosPIDY = {
 
 // ---- X轴（左右）速度控制 ----
 // 光流X正方向 = 飞机向右移动，需要向左倾斜(roll负)来纠正
+// 积分项承担CG补偿的角色（替代配平值），需要足够大的积分权限
 PIDControllerType_t FlowVelXPID = {
-	.kp = 0.15f,         // 降低增益，防止过度响应（从0.3降到0.15）
-	.ki = 0.001f,        // 消除持续漂移
-	.kd = 0.05f,         // 抑制速度震荡
-	.LimitIntegralMax = 3.0f,
-	.LimitIntegralMin = -3.0f,
-	.LimitOutputMax =  4.0f,     // 降低最大倾角限制到±4°（从±8°降低）
-	.LimitOutputMin = -4.0f,
-	.IntegralThreshold = 10.0f,  // 速度误差<10时积分
+	.kp = 0.15f,         // 比例增益
+	.ki = 0.03f,         // 积分增益（加速CG补偿收敛）
+	.kd = 0.08f,         // 微分增益
+	.LimitIntegralMax = 280.0f,  // 积分限幅（0.03×280=8.4°，覆盖实测8°+裕量）
+	.LimitIntegralMin = -280.0f,
+	.LimitOutputMax =  10.0f,    // 输出限幅（必须>积分满载，留足比例项空间）
+	.LimitOutputMin = -10.0f,
+	.IntegralThreshold = 15.0f,  // 积分阈值（误差<15时全速积分，过滤噪声）
 	.alpha = 0.6f,               // 微分低通滤波
 	.prev_error = 0,
 	.intergral = 0,
@@ -270,14 +279,14 @@ PIDControllerType_t FlowVelXPID = {
 // ---- Y轴（前后）速度控制 ----
 // 光流Y正方向 = 飞机向前移动，需要向后倾斜(pitch正)来纠正
 PIDControllerType_t FlowVelYPID = {
-	.kp = 0.15f,         // 降低增益（从0.3降到0.15）
-	.ki = 0.001f,        // 消除持续漂移
-	.kd = 0.05f,         // 抑制速度震荡
-	.LimitIntegralMax = 3.0f,
-	.LimitIntegralMin = -3.0f,
-	.LimitOutputMax =  4.0f,     // 降低最大倾角限制到±4°
-	.LimitOutputMin = -4.0f,
-	.IntegralThreshold = 10.0f,
+	.kp = 0.15f,         // 比例增益
+	.ki = 0.03f,         // 积分增益
+	.kd = 0.08f,         // 微分增益
+	.LimitIntegralMax = 280.0f,  // 积分限幅（0.03×280=8.4°）
+	.LimitIntegralMin = -280.0f,
+	.LimitOutputMax =  10.0f,    // 输出限幅
+	.LimitOutputMin = -10.0f,
+	.IntegralThreshold = 15.0f,  // 积分阈值
 	.alpha = 0.6f,
 	.prev_error = 0,
 	.intergral = 0,

@@ -1,52 +1,52 @@
 /*********************************************************************************************************************
-* CYT4BB Opensourec Library ���� CYT4BB ��Դ�⣩��һ�����ڹٷ� SDK �ӿڵĵ�������Դ��
-* Copyright (c) 2022 SEEKFREE ��ɿƼ�
+* CYT4BB Opensource Library (CYT4BB 开源库) 是一个基于官方 SDK 接口的第三方开源库
+* Copyright (c) 2022 SEEKFREE 逐飞科技
 *
-* ���ļ��� CYT4BB ��Դ���һ����
+* 本文件是 CYT4BB 开源库的一部分
 *
-* CYT4BB ��Դ�� ���������
-* �����Ը���������������ᷢ���� GPL��GNU General Public License���� GNUͨ�ù�������֤��������
-* �� GPL �ĵ�3�棨�� GPL3.0������ѡ��ģ��κκ����İ汾�����·�����/���޸���
+* CYT4BB 开源库 是免费软件
+* 您可以根据自由软件基金会发布的 GPL (GNU General Public License) 即 GNU通用公共许可证
+* 即 GPL 的第3版（即 GPL3.0）或（您选择的）任何后来的版本，重新发布和/或修改它
 *
-* ����Դ��ķ�����ϣ�����ܷ������ã�����δ�������κεı�֤
-* ����û�������������Ի��ʺ��ض���;�ı�֤
-* ����ϸ����μ� GPL
+* 本开源库的发布是希望它能发挥作用，但并未对其作任何的保证
+* 甚至没有隐含的适销性或适合特定用途的保证
+* 更多细节请参见 GPL
 *
-* ��Ӧ�����յ�����Դ���ͬʱ�յ�һ�� GPL �ĸ���
-* ���û�У������<https://www.gnu.org/licenses/>
+* 您应该在收到本开源库的同时收到一份 GPL 的副本
+* 如果没有，请参阅<https://www.gnu.org/licenses/>
 *
-* ����ע����
-* ����Դ��ʹ�� GPL3.0 ��Դ����֤Э�� ������������Ϊ���İ汾
-* ��������Ӣ�İ��� libraries/doc �ļ����µ� GPL3_permission_statement.txt �ļ���
-* ����֤������ libraries �ļ����� �����ļ����µ� LICENSE �ļ�
-* ��ӭ��λʹ�ò����������� ���޸�����ʱ���뱣����ɿƼ��İ�Ȩ����������������
+* 额外注明：
+* 本开源库使用 GPL3.0 开源许可证协议 以上许可申明为译文版本
+* 许可申明英文版在 libraries/doc 文件夹下的 GPL3_permission_statement.txt 文件中
+* 许可证副本在 libraries 文件夹下 即该文件夹下的 LICENSE 文件
+* 欢迎各位使用并传播本程序 但修改内容时必须保留逐飞科技的版权声明（即本声明）
 *
-* �ļ�����          cm7_0_isr
-* ��˾����          �ɶ���ɿƼ����޹�˾
-* �汾��Ϣ          �鿴 libraries/doc �ļ����� version �ļ� �汾˵��
-* ��������          IAR 9.40.1
-* ����ƽ̨          CYT4BB
-* ��������          https://seekfree.taobao.com/
+* 文件名称          cm7_0_isr
+* 公司名称          成都逐飞科技有限公司
+* 版本信息          查看 libraries/doc 文件夹内 version 文件 版本说明
+* 开发环境          IAR 9.40.1
+* 适用平台          CYT4BB
+* 店铺链接          https://seekfree.taobao.com/
 *
-* �޸ļ�¼
-* ����              ����                ��ע
-* 2024-1-9      pudding            first version
-* 2024-5-14     pudding            ����12��pit�����ж� ���Ӳ���ע��˵��
-* 2025-2-4      pudding            �Ż������ж��߼�����ֹ������ŵ��µĿ������⣬�Ż����ڲ����ʼ����߼�
-* 2025-2-4      pudding            �����������ڽӿ�
+* 修改记录
+* 日期              作者                备注
+*
+* 2024-5-14     pudding            新建12个pit周期中断 增加部分注释说明
+* 2025-2-4      pudding            优化串口中断逻辑，防止意外干扰导致的卡死问题，优化内部操作
+* 2025-2-4      pudding            新增两个串口接口
 ********************************************************************************************************************/
 
 #include "zf_common_headfile.h"
 
 
-// **************************** PIT�жϺ��� ****************************
+// **************************** PIT中断函数 ****************************
 /*
-void pit0_ch0_isr()                     // ��ʱ��ͨ�� 0 �����жϷ�����      
+void pit0_ch0_isr()                     // 定时器通道 0 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH0);
     Attitude_Update();
 
-    // �⻷���ǶȻ� (ң�������� + ������������)
+    //
     // PID_Update(&CamPosPIDX, 0.0f, filtered_flow_x);
     // PID_Update(&CamPosPIDY, 0.0f, filtered_flow_y);
 
@@ -55,7 +55,7 @@ void pit0_ch0_isr()                     // ��ʱ��ͨ�� 0 ����
     PID_Update(&YawPID,   FlyControl_yaw,        SystemIMU.angle.yaw);
     PID_Update(&HeightPID,FlyControl_height,     hight);
     
-    // �ڻ������ٶȻ�
+    //
     PID_Update(&RollRatePID,    RollPID.output,   SystemIMU.gyro_deg[0]);
     PID_Update(&PitchRatePID,   PitchPID.output,  SystemIMU.gyro_deg[1]); 
     PID_Update(&YawRatePID,     YawPID.output ,   SystemIMU.gyro_deg[2]);
@@ -64,105 +64,105 @@ void pit0_ch0_isr()                     // ��ʱ��ͨ�� 0 ����
 }
 */
 
-void pit0_ch1_isr()                     // ��ʱ��ͨ�� 1 �����жϷ�����      
+void pit0_ch1_isr()                     // 定时器通道 1 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH1);
     
 }
 
-void pit0_ch2_isr()                     // ��ʱ��ͨ�� 2 �����жϷ�����      
+void pit0_ch2_isr()                     // 定时器通道 2 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH2);
     
 }
 
-void pit0_ch10_isr()                    // ��ʱ��ͨ�� 10 �����жϷ�����      
+void pit0_ch10_isr()                    // 定时器通道 10 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH10);
     
 }
 
-void pit0_ch11_isr()                    // ��ʱ��ͨ�� 11 �����жϷ�����      
+void pit0_ch11_isr()                    // 定时器通道 11 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH11);
     
 }
 
-void pit0_ch12_isr()                    // ��ʱ��ͨ�� 12 �����жϷ�����      
+void pit0_ch12_isr()                    // 定时器通道 12 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH12);
     
 }
 
-void pit0_ch13_isr()                    // ��ʱ��ͨ�� 13 �����жϷ�����      
+void pit0_ch13_isr()                    // 定时器通道 13 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH13);
     
 }
 
-void pit0_ch14_isr()                    // ��ʱ��ͨ�� 14 �����жϷ�����      
+void pit0_ch14_isr()                    // 定时器通道 14 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH14);
     
 }
 
-void pit0_ch15_isr()                    // ��ʱ��ͨ�� 15 �����жϷ�����      
+void pit0_ch15_isr()                    // 定时器通道 15 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH15);
     
 }
 
-void pit0_ch16_isr()                    // ��ʱ��ͨ�� 16 �����жϷ�����      
+void pit0_ch16_isr()                    // 定时器通道 16 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH16);
     
 }
 
-void pit0_ch17_isr()                    // ��ʱ��ͨ�� 17 �����жϷ�����      
+void pit0_ch17_isr()                    // 定时器通道 17 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH17);
     
 }
 
-void pit0_ch18_isr()                    // ��ʱ��ͨ�� 18 �����жϷ�����      
+void pit0_ch18_isr()                    // 定时器通道 18 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH18);
     
 }
 
-void pit0_ch19_isr()                    // ��ʱ��ͨ�� 19 �����жϷ�����      
+void pit0_ch19_isr()                    // 定时器通道 19 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH19);
     
 }
 
-void pit0_ch20_isr()                    // ��ʱ��ͨ�� 20 �����жϷ�����      
+void pit0_ch20_isr()                    // 定时器通道 20 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH20);
     
 }
 
-void pit0_ch21_isr()                    // ��ʱ��ͨ�� 21 �����жϷ�����      
+void pit0_ch21_isr()                    // 定时器通道 21 周期中断回调
 {
     pit_isr_flag_clear(PIT_CH21);
     tsl1401_collect_pit_handler();
 }
-// **************************** PIT�жϺ��� ****************************
+// **************************** PIT中断函数 ****************************
 
 
-// **************************** �����жϺ��� ****************************
-// ����0Ĭ����Ϊ���Դ���
+// **************************** 串口中断函数 ****************************
+//
 void uart0_isr (void)
 {
-    if(uart_isr_mask(UART_0))            // ����0�����ж�
+    if(uart_isr_mask(UART_0))            //
     {
         
-#if DEBUG_UART_USE_INTERRUPT             // ������� debug �����ж�
-        debug_interrupr_handler();       // ���� debug ���ڽ��մ������� ���ݻᱻ debug ���λ�������ȡ
-#endif                                   // ����޸��� DEBUG_UART_INDEX ����δ�����Ҫ�ŵ���Ӧ�Ĵ����ж�ȥ
+#if DEBUG_UART_USE_INTERRUPT             // 如果开启 debug 串口中断
+        debug_interrupr_handler();       // 调用 debug 串口接收处理
+#endif
       
     }
-    else                                 // ����0�����ж�
+    else
     {           
         
         
@@ -172,13 +172,13 @@ void uart0_isr (void)
 
 void uart1_isr (void)
 {
-    if(uart_isr_mask(UART_1))            // ����1�����ж�
+    if(uart_isr_mask(UART_1))            //
     {
         
-        wireless_module_uart_handler();  // ����ģ��ͳһ�ص�����
+        wireless_module_uart_handler();  //
       
     }
-    else                                // ����1�����ж�
+    else
     {
       
         
@@ -188,16 +188,16 @@ void uart1_isr (void)
 
 void uart2_isr (void)
 {
-    if(uart_isr_mask(UART_2))            // ����2�����ж�
+    if(uart_isr_mask(UART_2))            //
     {
         
-        // gnss_uart_callback();            // GPSģ��ص����� (已注释，改用光流)
+        //
         
         // 【新增】UP-FLOW-302 光流传感器接收回调
         upflow302_receive_callback();
         
     }
-    else                                // ����2�����ж�
+    else
     {
         
         
@@ -207,13 +207,13 @@ void uart2_isr (void)
 
 void uart3_isr (void)
 {
-    if(uart_isr_mask(UART_3))            // ����3�����ж�
+    if(uart_isr_mask(UART_3))            //
     {
         
         
         
     }
-    else                                // ����3�����ж�
+    else
     {
       
         
@@ -223,13 +223,13 @@ void uart3_isr (void)
 
 void uart4_isr (void)
 {
-    if(uart_isr_mask(UART_4))            // ����4�����ж�
+    if(uart_isr_mask(UART_4))            //
     {
 
-        uart_receiver_handler();                                                                // ���ڽ��ջ��ص�����
+        uart_receiver_handler();                                                                //
        
     }
-    else                                // ����4�����ж�
+    else
     {
       
         
@@ -239,13 +239,13 @@ void uart4_isr (void)
 
 void uart5_isr (void)
 {
-    if(uart_isr_mask(UART_5))            // ����5�����ж�
+    if(uart_isr_mask(UART_5))            //
     {
         
         
        
     }
-    else                                // ����5�����ж�
+    else
     {
       
         
@@ -255,32 +255,32 @@ void uart5_isr (void)
 
 void uart6_isr (void)
 {
-    if(uart_isr_mask(UART_6))            // ����6�����ж�
+    if(uart_isr_mask(UART_6))            //
     {
 
         
        
     }
-    else                                // ����6�����ж�
+    else
     {
       
         
         
     }
 }
-// **************************** �����жϺ��� ****************************
+// **************************** 串口中断函数 ****************************
 
-// **************************** �ⲿ�жϺ��� ****************************
-void gpio_0_exti_isr()                  // �ⲿ GPIO_0 �жϷ�����     
+// **************************** 外部中断函数 ****************************
+void gpio_0_exti_isr()                  // 外部 GPIO_0 中断回调
 {
     
   
   
 }
 
-void gpio_1_exti_isr()                  // �ⲿ GPIO_1 �жϷ�����     
+void gpio_1_exti_isr()                  // 外部 GPIO_1 中断回调
 {
-    if(exti_flag_get(P01_0))		// ʾ��P1_0�˿��ⲿ�ж��ж�
+    if(exti_flag_get(P01_0))		//
     {
 
       
@@ -295,7 +295,7 @@ void gpio_1_exti_isr()                  // �ⲿ GPIO_1 �жϷ�����
     }
 }
 
-void gpio_2_exti_isr()                  // �ⲿ GPIO_2 �жϷ�����     
+void gpio_2_exti_isr()                  // 外部 GPIO_2 中断回调
 {
     if(exti_flag_get(P02_0))
     {
@@ -310,21 +310,21 @@ void gpio_2_exti_isr()                  // �ⲿ GPIO_2 �жϷ�����
 
 }
 
-void gpio_3_exti_isr()                  // �ⲿ GPIO_3 �жϷ�����     
+void gpio_3_exti_isr()                  // 外部 GPIO_3 中断回调
 {
 
 
 
 }
 
-void gpio_4_exti_isr()                  // �ⲿ GPIO_4 �жϷ�����     
+void gpio_4_exti_isr()                  // 外部 GPIO_4 中断回调
 {
 
 
 
 }
 
-void gpio_5_exti_isr()                  // �ⲿ GPIO_5 �жϷ�����     
+void gpio_5_exti_isr()                  // 外部 GPIO_5 中断回调
 {
 
 
@@ -332,129 +332,129 @@ void gpio_5_exti_isr()                  // �ⲿ GPIO_5 �жϷ�����
 }
 
 
-void gpio_6_exti_isr()                  // �ⲿ GPIO_6 �жϷ�����     
+void gpio_6_exti_isr()                  // 外部 GPIO_6 中断回调
 {
 
 
 
 }
 
-void gpio_7_exti_isr()                  // �ⲿ GPIO_7 �жϷ�����     
+void gpio_7_exti_isr()                  // 外部 GPIO_7 中断回调
 {
 
 
 
 }
 
-void gpio_8_exti_isr()                  // �ⲿ GPIO_8 �жϷ�����     
+void gpio_8_exti_isr()                  // 外部 GPIO_8 中断回调
 {
 
 
 
 }
 
-void gpio_9_exti_isr()                  // �ⲿ GPIO_9 �жϷ�����     
+void gpio_9_exti_isr()                  // 外部 GPIO_9 中断回调
 {
 
 
 
 }
 
-void gpio_10_exti_isr()                  // �ⲿ GPIO_10 �жϷ�����     
+void gpio_10_exti_isr()                  // 外部 GPIO_10 中断回调
 {
 
 
 
 }
 
-void gpio_11_exti_isr()                  // �ⲿ GPIO_11 �жϷ�����     
+void gpio_11_exti_isr()                  // 外部 GPIO_11 中断回调
 {
 
 
 
 }
 
-void gpio_12_exti_isr()                  // �ⲿ GPIO_12 �жϷ�����     
+void gpio_12_exti_isr()                  // 外部 GPIO_12 中断回调
 {
 
 
 
 }
 
-void gpio_13_exti_isr()                  // �ⲿ GPIO_13 �жϷ�����     
+void gpio_13_exti_isr()                  // 外部 GPIO_13 中断回调
 {
 
 
 
 }
 
-void gpio_14_exti_isr()                  // �ⲿ GPIO_14 �жϷ�����     
+void gpio_14_exti_isr()                  // 外部 GPIO_14 中断回调
 {
 
 
 
 }
 
-void gpio_15_exti_isr()                  // �ⲿ GPIO_15 �жϷ�����     
+void gpio_15_exti_isr()                  // 外部 GPIO_15 中断回调
 {
 
 
 
 }
 
-void gpio_16_exti_isr()                  // �ⲿ GPIO_16 �жϷ�����     
+void gpio_16_exti_isr()                  // 外部 GPIO_16 中断回调
 {
 
 
 
 }
 
-void gpio_17_exti_isr()                  // �ⲿ GPIO_17 �жϷ�����     
+void gpio_17_exti_isr()                  // 外部 GPIO_17 中断回调
 {
 
 
 
 }
 
-void gpio_18_exti_isr()                  // �ⲿ GPIO_18 �жϷ�����     
+void gpio_18_exti_isr()                  // 外部 GPIO_18 中断回调
 {
 
 
 
 }
 
-void gpio_19_exti_isr()                  // �ⲿ GPIO_19 �жϷ�����     
+void gpio_19_exti_isr()                  // 外部 GPIO_19 中断回调
 {
 
 
 
 }
 
-void gpio_20_exti_isr()                  // �ⲿ GPIO_20 �жϷ�����     
+void gpio_20_exti_isr()                  // 外部 GPIO_20 中断回调
 {
 
 
 
 }
 
-void gpio_21_exti_isr()                  // �ⲿ GPIO_21 �жϷ�����     
+void gpio_21_exti_isr()                  // 外部 GPIO_21 中断回调
 {
 
 
 
 }
 
-void gpio_22_exti_isr()                  // �ⲿ GPIO_22 �жϷ�����     
+void gpio_22_exti_isr()                  // 外部 GPIO_22 中断回调
 {
 
 
 
 }
 
-void gpio_23_exti_isr()                  // �ⲿ GPIO_23 �жϷ�����     
+void gpio_23_exti_isr()                  // 外部 GPIO_23 中断回调
 {
 
 
 
 }
-// **************************** �ⲿ�жϺ��� ****************************
+// **************************** 外部中断函数 ****************************
